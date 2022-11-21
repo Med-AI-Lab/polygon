@@ -33,6 +33,10 @@ def _get_data(data:PadUfes20Data):
     df['ID'] = df.patient_id +df.lesion_id.map(lambda x: f'___{x}')
     return df[['ID', 'image_path', 'label']]
 
+def _make_unique_IDs(df):
+    df = df.copy()
+    df.ID = df.ID + df.index.map(lambda x: '_' + str(x))
+    return df
 
 def get_split_data(data:PadUfes20Data, seed:int):
     df = _get_data(data)
@@ -52,7 +56,12 @@ def get_split_data(data:PadUfes20Data, seed:int):
     trn = df[df.ID.isin(trn_IDs)]
     val = df[df.ID.isin(val_IDs)]
     test = df[df.ID.isin(test_IDs)]
-    return {Phase.Train: trn, Phase.Valid: val, Phase.Test: test}
+
+    return {
+        Phase.Train: _make_unique_IDs(trn), 
+        Phase.Valid: _make_unique_IDs(val), 
+        Phase.Test: _make_unique_IDs(test)
+    }
 
 class PadUfes20_ImageClassification_Task:
     def __init__(self, data:PadUfes20Data, seed:int=0):
