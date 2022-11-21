@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import zipfile
 import wget
+import pandas as pd
 
 
 class PadUfes20Data:
@@ -41,5 +42,23 @@ class PadUfes20Data:
 
         os.remove(zip_pt)
         assert self._check_exists(), "Problems with downloaded files"
+
+        name_2_pt = {}
+        for subfldr in list((fldr / 'files' / 'images').iterdir()):
+            for pt in list(subfldr.iterdir()):
+                name_2_pt[pt.name] = str(pt)
+
+        def get_rel(name):
+            return name_2_pt[name]
+
+        csv_pt= files_fldr / 'metadata.csv'
+        df = pd.read_csv(csv_pt)
+        df['image_path'] = df.img_id.map(get_rel)
+        df.to_csv(csv_pt, index=False)
+
+    def get_metadata(self):
+        return pd.read_csv(self._get_data_folder() / 'files' / 'metadata.csv')
+
+    
 
         
