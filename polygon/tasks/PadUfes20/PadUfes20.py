@@ -8,10 +8,11 @@ from polygon.tasks.phase import Phase
 
 
 class ImageClassificationDataset(Dataset):
-    def __init__(self, df, tfm=None):
+    def __init__(self, df, tfm=None, for_evaluation:bool=False):
         super().__init__()
         self.df = df
         self.tfm = tfm
+        self.for_evaluation = for_evaluation
 
     def __len__(self):
         return len(self.df)
@@ -21,7 +22,10 @@ class ImageClassificationDataset(Dataset):
         img = Image.open(row.image_path).convert('RGB')
         if self.tfm is not None:
             img = self.tfm(img)
-        return {'image': img, 'ID': row.ID, 'label': row.label}
+        if self.for_evaluation:
+            return {'image': img, 'ID': row.ID}
+        else:
+            return {'image': img, 'ID': row.ID, 'label': row.label}
 
 def _get_diagnoses_names():
     return ['ACK', 'BCC', 'MEL', 'NEV', 'SCC', 'SEK']
@@ -70,7 +74,7 @@ class PadUfes20_ImageClassification_Task:
     def get_num_classes(self): return 6
 
     def get_dataset(self, phase:Phase, tfm=None) -> Dataset:
-        return ImageClassificationDataset(self._data[phase], tfm)
+        return ImageClassificationDataset(self._data[phase], tfm, for_evaluation=(phase==Phase.Test))
 
     def evaluate(self, phase, predictions):
         df = self._data[phase]
